@@ -18,63 +18,44 @@ def check_password():
         st.markdown("<h2 style='text-align: center; color: #1f2937;'>🛡️ 漫威戰略終端訪問授權</h2>", unsafe_allow_html=True)
         st.text_input("請輸入授權金鑰：", type="password", on_change=password_entered, key="password")
         return False
-    elif not st.session_state["password_correct"]:
-        st.text_input("金鑰錯誤，請重新輸入：", type="password", on_change=password_entered, key="password")
-        st.error("🚫 存取拒絕")
-        return False
-    else:
-        return True
+    return st.session_state.get("password_correct", False)
 
 if check_password():
-    # --- 🪄 視覺效果：明亮模式 CSS ---
+    # --- 🪄 視覺效果：CSS ---
     st.markdown("""
         <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;} footer {visibility: hidden;}
         .stApp { background-color: #ffffff; color: #1f2937; }
-        [data-testid="stSidebar"] { background-color: #f3f4f6; }
-        .hero-card-container { background-color: #ffffff; padding: 20px 0px; width: 100%; }
+        .hero-card-container { background-color: #ffffff; padding: 10px 0px; width: 100%; }
         .hero-name-zh { font-size: 2.2rem; font-weight: 700; color: #111827; margin: 0; }
-        .hero-name-en { color: #6b7280; font-size: 1rem; margin-bottom: 10px; }
-        
-        /* 藍色標籤區塊：強制不換行並顯示完整 */
+        .hero-name-en { color: #6b7280; font-size: 1rem; margin-bottom: 5px; }
         .official-tag-row {
-            background-color: #e0f2fe;
-            color: #0369a1;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            display: block; 
-            margin: 15px 0;
-            line-height: 1.5;
-            border-left: 5px solid #0ea5e9;
+            background-color: #e0f2fe; color: #0369a1; padding: 10px;
+            border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+            display: block; margin: 10px 0; border-left: 5px solid #0ea5e9;
         }
-        .stMarkdown { color: #374151; }
         </style>
     """, unsafe_allow_html=True)
 
-    # --- 📂 資料載入 (💡 徹底刪除 Cache，保證每次都讀最新檔案) ---
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    
-    # 這裡不再使用 @st.cache_data，手機才不會讀到舊資料
-    def load_json_fresh():
-        try:
+    # --- 📂 直接讀取檔案 (不使用快取) ---
+    @st.cache_resource # 改用 resource 快取，或是乾脆拿掉
+    def load_data():
+        if os.path.exists('hero_database_final.json'):
             with open('hero_database_final.json', 'r', encoding='utf-8') as f:
                 return json.load(f)
-        except Exception as e:
-            return None
+        return {}
 
-    db = load_json_fresh()
-    if db:
-        heroes = list(db.values())
-    else:
-        st.error("找不到 JSON 檔案，請確認檔案已 Push 到 GitHub！")
-        st.stop()
+    db = load_data()
+    heroes = list(db.values())
 
     # --- 🔍 側邊欄 ---
     st.sidebar.title("🦸‍♂️ 戰術檢索")
-    search_query = st.sidebar.text_input("搜尋角色或技能")
+    # 💡 這裡加一個重新整理按鈕，讓妳在手機上也能點
+    if st.sidebar.button("🔄 重新載入資料庫"):
+        st.cache_resource.clear()
+        st.rerun()
+
+    search_query = st.sidebar.text_input("輸入關鍵字")
     keywords = search_query.lower().split()
     
     filtered = [d for d in heroes if not keywords or all(k in f"{d['name_zh']} {d.get('strategy','')}".lower() for k in keywords)]
@@ -84,26 +65,26 @@ if check_password():
         selected_name = st.sidebar.selectbox(f"符合條件 ({len(filtered)})", [h['name_zh'] for h in filtered])
         hero = next(h for h in filtered if h['name_zh'] == selected_name)
         
-        # --- 🪄 解析 JSON 內容 ---
+        # --- 🪄 解析內容 ---
         raw_str = hero.get("strategy", "")
+        
+        # 檢查標題是否真的存在
         if "### ⚡ 核心技能摘要" in raw_str:
             parts = raw_str.split("### ⚡ 核心技能摘要")
-            tag_content = parts[0].replace("### 🏷️ 官方標籤", "").strip()
-            # 💡 這裡會渲染妳在 JSON 裡辛苦寫的「靈魂法師突擊」等標籤化文字
-            main_content = "### ⚡ 核心技能摘要" + parts[1]
-            display_html = f'<div class="official-tag-row">🏷️ 官方標籤：{tag_content}</div>\n\n{main_content}'
+            tag_line = parts[0].replace("### 🏷️ 官方標籤", "").strip()
+            rest = "### ⚡ 核心技能摘要" + parts[1]
+            display_html = f'<div class="official-tag-row">🏷️ 官方標籤：{tag_line}</div>\n\n{rest}'
         else:
+            # 如果讀不到標題，就直接顯示原始內容 (方便我們除錯)
             display_html = raw_str
 
-        # --- 🖼️ 渲染區 ---
+        # --- 🖼️ 渲染 ---
         st.markdown('<div class="hero-card-container">', unsafe_allow_html=True)
         col1, col2 = st.columns([1, 3])
         with col1:
-            img_path = os.path.join(BASE_DIR, "avatars", f"{hero['id']}.png")
-            if os.path.exists(img_path):
-                st.image(img_path, width=120)
-            else:
-                st.image("https://via.placeholder.com/120", width=120)
+            img_path = f"avatars/{hero['id']}.png"
+            if os.path.exists(img_path): st.image(img_path, width=120)
+            else: st.image("https://via.placeholder.com/120", width=120)
         with col2:
             st.markdown(f'<p class="hero-name-zh">{hero["name_zh"]}</p>', unsafe_allow_html=True)
             st.markdown(f'<p class="hero-name-en">{hero.get("name_en", "")}</p>', unsafe_allow_html=True)
