@@ -8,6 +8,7 @@ st.set_page_config(page_title="MSF 戰略專家終端", layout="wide")
 # --- 🔐 2. 密碼檢查功能 (使用 st.secrets) ---
 def check_password():
     def password_entered():
+        # 請確保在 Streamlit Cloud 的 Secrets 裡有設定 MY_PASSWORD
         if st.session_state["password"] == st.secrets["MY_PASSWORD"]:
             st.session_state["password_correct"] = True
             del st.session_state["password"] 
@@ -27,7 +28,7 @@ def check_password():
 
 # --- 🎬 3. 程式主邏輯 ---
 if check_password():
-    # --- 🪄 明亮模式 CSS ---
+    # --- 🪄 明亮模式 CSS 與 URL 連結樣式 ---
     st.markdown("""
         <style>
         #MainMenu {visibility: hidden;}
@@ -38,16 +39,31 @@ if check_password():
         .hero-name-zh { font-size: 2.8rem; font-weight: 700; color: #111827; margin: 0; }
         .hero-name-en { color: #6b7280; font-size: 1.1rem; font-family: monospace; }
         
-        /* 官方標籤與連結樣式 */
+        /* 官方標籤樣式 */
         .official-tag { 
             background-color: #e0f2fe; color: #0369a1; padding: 4px 12px;
             border-radius: 20px; font-weight: bold; font-size: 1rem; 
         }
+        
+        /* 🌐 官方連結專屬樣式 */
         .official-link {
-            display: inline-block; margin-top: 10px; font-size: 0.95rem;
-            color: #0ea5e9 !important; text-decoration: none !important; font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 15px;
+            background-color: #f0f9ff;
+            color: #0ea5e9 !important;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            text-decoration: none !important;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
         }
-        .official-link:hover { text-decoration: underline !important; }
+        .official-link:hover {
+            background-color: #e0f2fe;
+            border-color: #7dd3fc;
+            transform: translateY(-1px);
+        }
         
         section[data-testid="stSidebar"] { background-color: #f3f4f6; border-right: 1px solid #e5e7eb; }
         .hint-box {
@@ -55,7 +71,6 @@ if check_password():
             border: 1px dashed #bae6fd; padding: 12px; border-radius: 8px; margin-bottom: 20px;
         }
         img { border-radius: 12px; }
-        .stMarkdown { color: #374151; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -70,6 +85,7 @@ if check_password():
     def get_avatar_abs_path(h_id):
         folder = "avatars" 
         if not os.path.exists(folder): return None
+        # 嘗試各種大小寫組合找圖
         for name in [f"{h_id}.png", f"{h_id.lower()}.png", f"{h_id.capitalize()}.png"]:
             path = os.path.join(folder, name)
             if os.path.exists(path): return os.path.abspath(path)
@@ -78,7 +94,9 @@ if check_password():
     db = load_data()
 
     st.sidebar.title("🛡️ MSF 戰術索引")
-    st.sidebar.markdown('<div class="hint-box">💡 提示：使用「空格」分隔關鍵字<br>例如：<strong>變種人 暈眩</strong></div>', unsafe_allow_html=True)
+    if st.sidebar.button("🔄 重新載入資料庫"):
+        st.cache_data.clear()
+        st.rerun()
 
     search_q = st.sidebar.text_input("🔍 全文檢索", placeholder="輸入名稱、效果或標籤...")
 
@@ -91,9 +109,9 @@ if check_password():
             selected_name = st.sidebar.selectbox(f"符合戰術條件 ({len(filtered)})", [h['name_zh'] for h in filtered])
             hero = next(h for h in filtered if h['name_zh'] == selected_name)
             
-            # 解析戰術與 URL
-            strategy = hero.get("strategy", "").replace("### 🏷️ 官方標籤", '<span class="official-tag">🏷️ 官方標籤</span>')
-            strategy = strategy.replace("### 🏷️ **官方標籤**", '<span class="official-tag">🏷️ 官方標籤</span>')
+            # --- 解析戰術文字與 URL ---
+            strategy_text = hero.get("strategy", "")
+            strategy_html = strategy_text.replace("### 🏷️ 官方標籤", '<span class="official-tag">🏷️ 官方標籤</span>')
             official_url = hero.get("url", "")
             
             avatar_path = get_avatar_abs_path(hero['id'])
@@ -104,18 +122,20 @@ if check_password():
             col1, col2 = st.columns([1, 4])
             with col1:
                 if avatar_path: st.image(avatar_path, width=150)
-                else: st.image("https://via.placeholder.com/150?text=MSF", width=150)
+                else: st.image("https://via.placeholder.com/150?text=Avatar", width=150)
+            
             with col2:
                 st.markdown(f'<p class="hero-name-zh">🦸 {hero["name_zh"]}</p>', unsafe_allow_html=True)
                 st.markdown(f'<p class="hero-name-en">{hero.get("name_en", "")}</p>', unsafe_allow_html=True)
-                # 💡 這裡會根據 JSON 裡的 url 顯示連結
+                
+                # 💡 關鍵功能：如果 JSON 有 url 欄位，就顯示連結
                 if official_url:
                     st.markdown(f'<a href="{official_url}" target="_blank" class="official-link">🌐 官方資料連結</a>', unsafe_allow_html=True)
             
             st.divider() 
-            st.markdown(strategy, unsafe_allow_html=True)
+            st.markdown(strategy_html, unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.sidebar.warning("查無符合結果")
     else:
-        st.error("📡 找不到資料庫檔案。")
+        st.error("📡 找不到資料庫檔案 hero_database_final.json")
