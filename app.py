@@ -15,7 +15,7 @@ def check_password():
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
-        st.markdown("<h2 style='text-align: center; color: white;'>🛡️ 漫威戰略終端訪問授權</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #1f2937;'>🛡️ 漫威戰略終端訪問授權</h2>", unsafe_allow_html=True)
         st.text_input("請輸入授權金鑰：", type="password", on_change=password_entered, key="password")
         return False
     elif not st.session_state["password_correct"]:
@@ -27,36 +27,43 @@ def check_password():
 
 # --- 🎬 3. 程式主邏輯 ---
 if check_password():
-    # --- 🪄 視覺效果：優化後的 CSS ---
+    # --- 🪄 視覺效果：明亮模式 CSS ---
     st.markdown("""
         <style>
-        /* 移除強制隱藏 header，讓側邊欄按鈕可以顯示 */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         
-        /* 全域背景設定 */
-        .stApp { background-color: #0d1117; color: #c9d1d9; }
+        /* 全域背景設定為明亮白/灰 */
+        .stApp { background-color: #ffffff; color: #1f2937; }
         
-        /* 側邊欄樣式微調，確保它是深色的 */
+        /* 側邊欄樣式：淺灰色 */
         [data-testid="stSidebar"] {
-            background-color: #161b22;
+            background-color: #f3f4f6;
         }
         
+        /* 角色卡片容器 */
         .hero-card-container { 
-            background-color: #0d1117; 
+            background-color: #ffffff; 
             padding: 20px 0px;
             width: 100%;
         }
-        .hero-name-zh { font-size: 2.8rem; font-weight: 700; color: white; margin: 0; }
-        .hero-name-en { color: #8b949e; font-size: 1.1rem; }
+        
+        /* 文字顏色調整 */
+        .hero-name-zh { font-size: 2.8rem; font-weight: 700; color: #111827; margin: 0; }
+        .hero-name-en { color: #6b7280; font-size: 1.1rem; }
+        
+        /* 標籤樣式：清爽藍色 */
         .official-tag {
-            background-color: #1f2937;
-            color: #38bdf8;
+            background-color: #e0f2fe;
+            color: #0369a1;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: 600;
         }
+        
+        /* 修正 Markdown 文字在明亮模式下的顏色 */
+        .stMarkdown { color: #374151; }
         </style>
     """, unsafe_allow_html=True)
 
