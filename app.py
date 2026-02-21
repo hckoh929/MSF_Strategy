@@ -19,7 +19,7 @@ def check_password():
 if check_password():
     # --- 📂 強制讀取新檔案 (不使用任何快取) ---
     # 💡 妮妮建議：請將妳的 JSON 檔名改為 hero_data_v2.json 來測試
-    JSON_FILE = 'hero_data_v2.json' 
+    JSON_FILE = 'hero_database_final.json' 
     
     with open(JSON_FILE, 'r', encoding='utf-8') as f:
         db = json.load(f)
@@ -51,4 +51,5 @@ if check_password():
         st.markdown(main_content)
     else:
         st.write(raw_str)
+
 
