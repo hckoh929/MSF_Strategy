@@ -91,7 +91,6 @@ if check_password():
             💡 <strong>小撇步：</strong><br>
             使用「空格」分隔關鍵字 (AND 邏輯)<br>
             例如：<code>變種人 暈眩</code><br><br>
-            這會幫妳找出同時符合這兩個條件的角色喔！
         </div>
     """, unsafe_allow_html=True)
 
@@ -133,3 +132,4 @@ if check_password():
             st.sidebar.warning("查無符合結果")
     else:
         st.error("📡 找不到資料庫檔案 hero_database_final.json")
+
