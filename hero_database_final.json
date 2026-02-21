@@ -2138,7 +2138,7 @@
         "name_zh": "星爵(帝查拉)",
         "strategy": "### 🏷️ 官方標籤\n英雄、宇宙、科技、射擊型、破壞者\n\n### ⚡ 核心技能摘要\n* 重力發射器：盲目、防禦力下降、能量竊取\n* 破壞者火箭：複製正面效果、殺傷力\n* 激昂破壞者：閃躲、解除負面效果、速度條增加、殺傷力增加、最大生命值增加",
         "name_en": "Star Lord_TChalla"
-        "url": "https://www.marvelstrikeforce.com/zht/characters/TChalla",
+        "url": "https://www.marvelstrikeforce.com/zht/characters/TChalla"
     },
     "StarBrand": {
         "id": "StarBrand",
@@ -2498,4 +2498,5 @@
         "url": "https://www.marvelstrikeforce.com/zht/characters/Yondu"
     }
 }
+
 
