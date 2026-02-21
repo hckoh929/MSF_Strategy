@@ -32,37 +32,31 @@ if check_password():
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        
-        /* 全域背景設定為明亮白/灰 */
         .stApp { background-color: #ffffff; color: #1f2937; }
+        [data-testid="stSidebar"] { background-color: #f3f4f6; }
         
-        /* 側邊欄樣式：淺灰色 */
-        [data-testid="stSidebar"] {
-            background-color: #f3f4f6;
-        }
-        
-        /* 角色卡片容器 */
         .hero-card-container { 
             background-color: #ffffff; 
             padding: 20px 0px;
             width: 100%;
         }
         
-        /* 文字顏色調整 */
         .hero-name-zh { font-size: 2.8rem; font-weight: 700; color: #111827; margin: 0; }
-        .hero-name-en { color: #6b7280; font-size: 1.1rem; }
+        .hero-name-en { color: #6b7280; font-size: 1.1rem; margin-bottom: 10px; }
         
-        /* 標籤樣式：清爽藍色 */
-        .official-tag {
+        /* ✨ 修正：讓整排標籤都變藍色的樣式 */
+        .official-tag-row {
             background-color: #e0f2fe;
             color: #0369a1;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 0.95rem;
             font-weight: 600;
+            display: block; /* 讓它橫跨整排 */
+            margin: 10px 0;
+            line-height: 1.6;
         }
         
-        /* 修正 Markdown 文字在明亮模式下的顏色 */
         .stMarkdown { color: #374151; }
         </style>
     """, unsafe_allow_html=True)
@@ -89,7 +83,6 @@ if check_password():
     # --- 🔍 側邊欄內容 ---
     st.sidebar.title("🦸‍♂️ 戰術檢索")
     search_query = st.sidebar.text_input("輸入關鍵字 (如: 隱身, 創傷)")
-    
     keywords = search_query.lower().split()
     
     filtered = []
@@ -103,7 +96,19 @@ if check_password():
         selected_name = st.sidebar.selectbox(f"符合條件 ({len(filtered)})", [h['name_zh'] for h in filtered])
         hero = next(h for h in filtered if h['name_zh'] == selected_name)
         
-        strategy_html = hero.get("strategy", "").replace("### 🏷️ 官方標籤", '<span class="official-tag">🏷️ 官方標籤</span>')
+        # --- 🪄 標籤渲染邏輯修正 ---
+        raw_strategy = hero.get("strategy", "")
+        if "### 🏷️ 官方標籤" in raw_strategy:
+            # 將標籤行與其餘內容分開
+            parts = raw_strategy.split("### ⚡ 核心技能摘要")
+            tag_line = parts[0].replace("### 🏷️ 官方標籤\n", "").strip()
+            rest_content = "### ⚡ 核心技能摘要" + parts[1] if len(parts) > 1 else ""
+            
+            # 將標籤整行包在藍色區塊裡
+            strategy_html = f'<div class="official-tag-row">🏷️ 官方標籤：{tag_line}</div>\n\n{rest_content}'
+        else:
+            strategy_html = raw_strategy
+
         avatar_path = get_avatar_abs_path(hero['id'])
         
         # --- 🖼️ 渲染區 ---
@@ -119,6 +124,7 @@ if check_password():
         with col2:
             st.markdown(f'<p class="hero-name-zh">{hero["name_zh"]}</p>', unsafe_allow_html=True)
             st.markdown(f'<p class="hero-name-en">{hero.get("name_en", "")}</p>', unsafe_allow_html=True)
+            # 使用 unsafe_allow_html 來確保 div 樣式生效
             st.markdown(strategy_html, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     else:
